@@ -7,8 +7,7 @@ import {
 } from "./firebase.js";
 
 export async function listarEmpleados() {
-  const snapshot = await getEmpleados();
-  return snapshot;
+  return await getEmpleados();
 }
 
 export async function guardarEmpleado(data, id) {
