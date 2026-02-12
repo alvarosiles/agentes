@@ -54,49 +54,6 @@ async function cargarDesdeFirebase() {
 /* ========================= */
 /* RENDER TABLA              */
 /* ========================= */
-// function renderTabla() {
-
-//   const inicio = (paginaActual - 1) * registrosPorPagina;
-//   const fin = inicio + registrosPorPagina;
-
-//   const datosPagina = empleadosFiltrados.slice(inicio, fin);
-
-//   let html = "";
-
-//   datosPagina.forEach((emp, index) => {
-//     html += `
-//   <tr id="row-${emp.id}">
-//         <td>${inicio + index + 1}</td>
-//         <td>${emp.nombre || ""}</td>
-//         <td>${emp.edad || ""}</td>
-//         <td>${emp.cedula || ""}</td>
-//         <td>${emp.sexo || ""}</td>
-//         <td>${emp.cargo || ""}</td>
-//         <td>${emp.telefono || ""}</td>
- 
-
-//     <td>
-//       ${emp.estado === "pendiente"
-//         ? '<span class="badge bg-warning text-dark">Pendiente</span>'
-//         : '<span class="badge bg-success">Guardado</span>'
-//       }
-//     </td>
-
-
-//         <td class="text-center">
-//           <button class="btn btn-sm btn-warning me-1 btnEditar" data-id="${emp.id}">
-//             <i class="bi bi-pencil"></i>
-//           </button>
-//           <button class="btn btn-sm btn-danger btnEliminar" data-id="${emp.id}">
-//             <i class="bi bi-trash"></i>
-//           </button>
-//         </td>
-//       </tr>
-//     `;
-//   });
-
-//   tabla.innerHTML = html;
-// }
 function renderTabla() {
 
   const inicio = (paginaActual - 1) * registrosPorPagina;
@@ -106,10 +63,9 @@ function renderTabla() {
 
   let html = "";
 
-  // 🔹 Filas reales
   datosPagina.forEach((emp, index) => {
     html += `
-      <tr id="row-${emp.id}">
+      <tr>
         <td>${inicio + index + 1}</td>
         <td>${emp.nombre || ""}</td>
         <td>${emp.edad || ""}</td>
@@ -117,12 +73,7 @@ function renderTabla() {
         <td>${emp.sexo || ""}</td>
         <td>${emp.cargo || ""}</td>
         <td>${emp.telefono || ""}</td>
-        <td>
-          ${emp.estado === "pendiente"
-            ? '<span class="badge bg-warning text-dark">Pendiente</span>'
-            : '<span class="badge bg-success">Guardado</span>'
-          }
-        </td>
+        <td>Guardado</td>
         <td class="text-center">
           <button class="btn btn-sm btn-warning me-1 btnEditar" data-id="${emp.id}">
             <i class="bi bi-pencil"></i>
@@ -135,70 +86,15 @@ function renderTabla() {
     `;
   });
 
-  // 🔥 RELLENAR HASTA 10 FILAS
-  const filasVacias = registrosPorPagina - datosPagina.length;
-
-  for (let i = 0; i < filasVacias; i++) {
-    html += `
-      <tr class="fila-vacia">
-        <td>&nbsp;</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-    `;
-  }
-
   tabla.innerHTML = html;
 }
 
 /* ========================= */
 /* PAGINACIÓN                */
 /* ========================= */
-// function renderPaginacion() {
-
-//   const totalPaginas = Math.ceil(empleadosFiltrados.length / registrosPorPagina);
-//   let html = "";
-
-//   for (let i = 1; i <= totalPaginas; i++) {
-//     html += `
-//       <li class="page-item ${i === paginaActual ? "active" : ""}">
-//         <a class="page-link" href="#">${i}</a>
-//       </li>
-//     `;
-//   }
-
-//   paginacion.innerHTML = html;
-
-//   document.querySelectorAll(".page-link").forEach((btn, index) => {
-//     btn.addEventListener("click", (e) => {
-//       e.preventDefault();
-//       paginaActual = index + 1;
-//       renderTabla();
-//       renderPaginacion();
-//     });
-//   });
-// }
- function renderPaginacion() {
+function renderPaginacion() {
 
   const totalPaginas = Math.ceil(empleadosFiltrados.length / registrosPorPagina);
-
-  const nav = document.querySelector("#paginacion").parentElement;
-
-  // 🔥 Si no hay registros → ocultar nav completo
-  if (totalPaginas === 0) {
-    paginacion.innerHTML = "";
-    nav.style.display = "none";
-    return;
-  }
-
-  nav.style.display = "block";
-
   let html = "";
 
   for (let i = 1; i <= totalPaginas; i++) {
@@ -221,33 +117,22 @@ function renderTabla() {
   });
 }
 
-
-let timeoutBuscador;
-
+/* ========================= */
+/* BUSCADOR                  */
+/* ========================= */
 buscador.addEventListener("input", (e) => {
 
-  clearTimeout(timeoutBuscador);
+  const valor = e.target.value.toLowerCase();
 
-  timeoutBuscador = setTimeout(() => {
+  empleadosFiltrados = empleadosGlobal.filter(emp =>
+    emp.nombre?.toLowerCase().includes(valor) ||
+    emp.cedula?.toLowerCase().includes(valor) ||
+    emp.cargo?.toLowerCase().includes(valor)
+  );
 
-    const valor = e.target.value
-      .toLowerCase()
-      .trim();
-
-    if (valor === "") {
-      empleadosFiltrados = [...empleadosGlobal];
-    } else {
-      empleadosFiltrados = empleadosGlobal.filter(emp =>
-        Object.values(emp).join(" ").toLowerCase().includes(valor)
-      );
-    }
-
-    paginaActual = 1;
-    renderTabla();
-    renderPaginacion();
-
-  }, 200); // 200ms delay
-
+  paginaActual = 1;
+  renderTabla();
+  renderPaginacion();
 });
 
 /* ========================= */
@@ -340,101 +225,19 @@ confirmDeleteBtn.addEventListener("click", async () => {
 /* ========================= */
 /* ELIMINAR TODO             */
 /* ========================= */
-// btnEliminarTodo.addEventListener("click", async () => {
-
-//   if (!confirm("¿Eliminar todos los empleados?")) return;
-
-//   await eliminarTodo();
-
-//   iziToast.success({
-//     title: "OK",
-//     message: "Todos eliminados"
-//   });
-
-//   cargarDesdeFirebase();
-// });
- btnEliminarTodo.addEventListener("click", async () => {
+btnEliminarTodo.addEventListener("click", async () => {
 
   if (!confirm("¿Eliminar todos los empleados?")) return;
 
-  const deleteContainer = document.getElementById("deleteProgressContainer");
-  const deleteBar = document.getElementById("deleteProgressBar");
-
-  deleteContainer.style.display = "block";
-
-  let eliminados = 0;
-  const total = empleadosGlobal.length;
-
-  // 🔥 ELIMINAR DESDE EL ÚLTIMO AL PRIMERO
-  for (let i = empleadosGlobal.length - 1; i >= 0; i--) {
-
-    const emp = empleadosGlobal[i];
-
-    const fila = document.getElementById(`row-${emp.id}`);
-
-if (fila) {
-
-  fila.style.transition = "opacity 0.4s ease";
-  fila.style.opacity = "0";
-
-  await new Promise(resolve => setTimeout(resolve, 400));
-
-  fila.remove();
-}
-
-    // const fila = document.getElementById(`row-${emp.id}`);
-
-    // // Animación fade out
-    // if (fila) {
-    //   fila.classList.add("fade-out");
-    //   await new Promise(resolve => setTimeout(resolve, 300));
-    //   fila.remove();
-    // }
-
-    // Eliminar en Firebase
-    await eliminar(emp.id);
-
-    // Actualizar arrays
-    empleadosGlobal.splice(i, 1);
-    empleadosFiltrados = empleadosFiltrados.filter(e => e.id !== emp.id);
-
-    eliminados++;
-
-    // Actualizar barra de progreso
-    const porcentaje = Math.round((eliminados / total) * 100);
-    deleteBar.style.width = porcentaje + "%";
-    deleteBar.innerText = porcentaje + "%";
-
-    // Ajustar paginación si la página queda vacía
-    const inicio = (paginaActual - 1) * registrosPorPagina;
-
-    if (inicio >= empleadosFiltrados.length && paginaActual > 1) {
-      paginaActual--;
-      renderTabla();
-      renderPaginacion();
-    }
-  }
-
-  // Render final limpio
-  renderTabla();
-  renderPaginacion();
-
-  deleteBar.classList.remove("progress-bar-animated");
+  await eliminarTodo();
 
   iziToast.success({
     title: "OK",
-    message: "Eliminación completada"
+    message: "Todos eliminados"
   });
 
-  setTimeout(() => {
-    deleteContainer.style.display = "none";
-    deleteBar.style.width = "0%";
-    deleteBar.innerText = "";
-    deleteBar.classList.add("progress-bar-animated");
-  }, 1500);
-
+  cargarDesdeFirebase();
 });
-
 
 /* ========================= */
 /* IMPORTAR EXCEL            */
@@ -454,18 +257,12 @@ excelFile.addEventListener("change", (e) => {
 
     const workbook = XLSX.read(new Uint8Array(event.target.result), { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const datos = XLSX.utils.sheet_to_json(sheet);
+    datosExcel = XLSX.utils.sheet_to_json(sheet);
 
-    if (datos.length === 0) {
+    if (datosExcel.length === 0) {
       iziToast.warning({ title: "Vacío", message: "El Excel no tiene datos" });
       return;
     }
-
-    // 🔥 Agregar estado pendiente
-    datosExcel = datos.map(emp => ({
-      ...emp,
-      estado: "pendiente"
-    }));
 
     empleadosFiltrados = [...datosExcel];
     paginaActual = 1;
@@ -479,63 +276,24 @@ excelFile.addEventListener("change", (e) => {
   reader.readAsArrayBuffer(file);
 });
 
-
-
+/* ========================= */
+/* CONSOLIDAR EXCEL          */
+/* ========================= */
 btnConsolidar.addEventListener("click", async () => {
 
-  const pendientes = datosExcel.filter(emp => emp.estado === "pendiente");
-
-  if (pendientes.length === 0) {
-    iziToast.info({ title: "Info", message: "No hay pendientes" });
-    return;
-  }
-
-  const progressContainer = document.getElementById("progressContainer");
-  const progressBar = document.getElementById("progressBar");
-
-  progressContainer.style.display = "block";
-
-  let completados = 0;
-  const total = pendientes.length;
-
-  // 🔥 Sincronización en paralelo controlado
-  const promesas = pendientes.map(async (emp) => {
-
-    emp.estado = "sincronizando";
-    renderTabla();
-
+  for (let emp of datosExcel) {
     await guardarEmpleado(emp);
-
-    emp.estado = "guardado";
-
-    completados++;
-
-    const porcentaje = Math.round((completados / total) * 100);
-    progressBar.style.width = porcentaje + "%";
-    progressBar.innerText = porcentaje + "%";
-
-    renderTabla();
-  });
-
-  await Promise.all(promesas);
-
-  progressBar.classList.remove("progress-bar-animated");
+  }
 
   iziToast.success({
     title: "OK",
-    message: "Sincronización completada"
+    message: "Datos importados correctamente"
   });
 
   btnConsolidar.disabled = true;
 
-  setTimeout(() => {
-    progressContainer.style.display = "none";
-    progressBar.style.width = "0%";
-    progressBar.classList.add("progress-bar-animated");
-  }, 1500);
-
+  cargarDesdeFirebase();
 });
-
 
 /* ========================= */
 /* EXPORTAR EXCEL            */
@@ -565,15 +323,3 @@ btnExportar.addEventListener("click", () => {
 
   XLSX.writeFile(wb, "empleados.xlsx");
 });
-
-const fila = document.getElementById(`row-${emp.id}`);
-
-if (fila) {
-
-  fila.style.transition = "opacity 0.4s ease";
-  fila.style.opacity = "0";
-
-  await new Promise(resolve => setTimeout(resolve, 400));
-
-  fila.remove();
-}
