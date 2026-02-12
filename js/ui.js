@@ -1,135 +1,154 @@
-import {
-  listarEmpleados,
-  guardarEmpleado,
-  eliminar,
-  obtener
-} from "./empleados.js";
-
-import {
-  subirFoto,
-  eliminarFotoStorage
-} from "./firebase.js";
+import { listarEmpleados, guardarEmpleado, eliminarTodo } from "./empleados.js";
+import { initDB, guardarCache, obtenerCache } from "./indexedDB.js";
 
 const tabla = document.getElementById("tablaEmpleados");
-const form = document.getElementById("formEmpleado");
-const modal = new bootstrap.Modal(document.getElementById("empleadoModal"));
-const confirmModal = new bootstrap.Modal(document.getElementById("confirmModal"));
+const excelInput = document.getElementById("excelFile");
+const btnImportar = document.getElementById("btnImportar");
+const btnConsolidar = document.getElementById("btnConsolidar");
+const btnExportar = document.getElementById("btnExportar");
+const btnEliminarTodo = document.getElementById("btnEliminarTodo");
 
-let idEliminar = null;
-let eliminarFoto = false;
+let datosExcel = [];
 
-document.addEventListener("DOMContentLoaded", cargarTabla);
+/* ========================== */
+/* INICIALIZAR                */
+/* ========================== */
+document.addEventListener("DOMContentLoaded", async () => {
+  await initDB();
 
-async function cargarTabla() {
-  tabla.innerHTML = "";
+  const cache = await obtenerCache();
+  if (cache.length > 0) {
+    renderTabla(cache, "Cache");
+  }
+
+  cargarDesdeFirebase();
+});
+
+/* ========================== */
+/* CARGAR FIREBASE            */
+/* ========================== */
+async function cargarDesdeFirebase() {
   const empleados = await listarEmpleados();
+  const data = [];
 
   empleados.forEach(doc => {
     const e = doc.data();
+    data.push({ id: doc.id, ...e });
+  });
 
+  guardarCache(data);
+  renderTabla(data, "Guardado");
+}
+
+function renderTabla(data, estadoDefault) {
+  tabla.innerHTML = "";
+
+  data.forEach(emp => {
     tabla.innerHTML += `
       <tr>
-        <td>${e.foto ? `<img src="${e.foto}" width="60" class="rounded">` : ""}</td>
-        <td>${e.nombre}</td>
-        <td>${e.edad}</td>
-        <td>${e.cedula}</td>
-        <td>${e.sexo}</td>
-        <td>${e.cargo}</td>
-        <td>${e.telefono}</td>
-        <td>
-          <button class="btn btn-warning btn-sm" onclick="editar('${doc.id}')">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="confirmarEliminar('${doc.id}')">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
+        <td>${emp.nombre || ""}</td>
+        <td>${emp.edad || ""}</td>
+        <td>${emp.cedula || ""}</td>
+        <td>${emp.sexo || ""}</td>
+        <td>${emp.cargo || ""}</td>
+        <td>${emp.telefono || ""}</td>
+        <td>${estadoDefault}</td>
       </tr>
     `;
   });
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+/* ========================== */
+/* IMPORTAR EXCEL             */
+/* ========================== */
+btnImportar.addEventListener("click", () => {
 
-  const id = idEmpleado.value;
-  const file = foto.files[0];
-  let fotoURL = fotoActual.value;
+  const file = excelInput.files[0];
+  if (!file) return;
 
-  if (file) {
-    if (fotoURL) await eliminarFotoStorage(fotoURL);
-    fotoURL = await subirFoto(file);
-  }
+  const reader = new FileReader();
 
-  if (eliminarFoto) {
-    await eliminarFotoStorage(fotoURL);
-    fotoURL = null;
-    eliminarFoto = false;
-  }
+  reader.onload = (e) => {
+    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    datosExcel = XLSX.utils.sheet_to_json(sheet);
 
-  const data = {
-    nombre: nombre.value,
-    cedula: cedula.value,
-    edad: edad.value,
-    sexo: sexo.value,
-    cargo: cargo.value,
-    telefono: telefono.value,
-    foto: fotoURL
+    renderTabla(datosExcel, "📄 Pendiente");
+    btnConsolidar.disabled = false;
   };
 
-  await guardarEmpleado(data, id);
-
-  modal.hide();
-  form.reset();
-  previewFoto.classList.add("d-none");
-  quitarFotoBtn.classList.add("d-none");
-
-  cargarTabla();
-  iziToast.success({ title: "OK", message: "Guardado correctamente" });
+  reader.readAsArrayBuffer(file);
 });
 
-window.editar = async (id) => {
-  const doc = await obtener(id);
-  const data = doc.data();
+/* ========================== */
+/* CONSOLIDAR                 */
+/* ========================== */
+btnConsolidar.addEventListener("click", async () => {
 
-  idEmpleado.value = id;
-  nombre.value = data.nombre;
-  cedula.value = data.cedula;
-  edad.value = data.edad;
-  sexo.value = data.sexo;
-  cargo.value = data.cargo;
-  telefono.value = data.telefono;
-  fotoActual.value = data.foto || "";
+  const filas = tabla.querySelectorAll("tr");
 
-  if (data.foto) {
-    previewFoto.src = data.foto;
-    previewFoto.classList.remove("d-none");
-    quitarFotoBtn.classList.remove("d-none");
+  for (let i = 0; i < datosExcel.length; i++) {
+
+    const emp = datosExcel[i];
+    const estadoCell = filas[i].children[6];
+
+    try {
+      estadoCell.innerHTML = "🔄 Guardando...";
+
+      await guardarEmpleado(emp);
+
+      estadoCell.innerHTML = "✅ Guardado";
+
+    } catch {
+      estadoCell.innerHTML = "❌ Error";
+    }
   }
 
-  modal.show();
-};
-
-window.confirmarEliminar = (id) => {
-  idEliminar = id;
-  confirmModal.show();
-};
-
-document.getElementById("confirmDelete").addEventListener("click", async () => {
-  const doc = await obtener(idEliminar);
-  const data = doc.data();
-
-  if (data.foto) await eliminarFotoStorage(data.foto);
-
-  await eliminar(idEliminar);
-
-  confirmModal.hide();
-  cargarTabla();
-  iziToast.success({ title: "OK", message: "Eliminado correctamente" });
+  cargarDesdeFirebase();
+  btnConsolidar.disabled = true;
 });
 
-quitarFotoBtn.addEventListener("click", () => {
-  previewFoto.classList.add("d-none");
-  quitarFotoBtn.classList.add("d-none");
-  eliminarFoto = true;
+/* ========================== */
+/* EXPORTAR                   */
+/* ========================== */
+btnExportar.addEventListener("click", async () => {
+
+  const empleados = await listarEmpleados();
+  let data = [];
+
+  empleados.forEach(doc => data.push(doc.data()));
+
+  if (data.length === 0) {
+    data.push({
+      nombre: "",
+      edad: "",
+      cedula: "",
+      sexo: "",
+      cargo: "",
+      telefono: ""
+    });
+  }
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Empleados");
+
+  XLSX.writeFile(wb, "empleados.xlsx");
+});
+
+/* ========================== */
+/* ELIMINAR TODO              */
+/* ========================== */
+btnEliminarTodo.addEventListener("click", async () => {
+
+  if (!confirm("¿Seguro que desea eliminar todo?")) return;
+
+  await eliminarTodo();
+  renderTabla([], "");
+  guardarCache([]);
+
+  iziToast.success({
+    title: "OK",
+    message: "Todos los registros eliminados"
+  });
 });
