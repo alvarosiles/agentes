@@ -4,48 +4,48 @@ const path = require("path");
 function limpiarTexto(texto) {
 	let resultado = texto;
  
-// resultado = resultado.replace(
-//   /<SView\b[^>]*>/g,
-//   (match) => {
-//     return match
-//       // elimina comentarios //
-//       .replace(/\s*\/\/.*?(?=\s|>)/g, "")
-//       // limpia espacios dobles
-//       .replace(/\s{2,}/g, " ")
-//       .trim();
-//   }
-// );
+resultado = resultado.replace(
+  /<SView\b[^>]*>/g,
+  (match) => {
+    return match
+      // elimina comentarios //
+      .replace(/\s*\/\/.*?(?=\s|>)/g, "")
+      // limpia espacios dobles
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+);
  
-//  resultado = resultado.replace(
-//   /style=\{\{([\s\S]*?)\}\}/g,
-//   (match, contenido) => {
-//     return `style={{ ${contenido
-//       .replace(/\s*\/\/.*$/gm, "")   // elimina comentarios //
-//       .replace(/\s*\n\s*/g, " ")     // quita saltos de línea
-//       .replace(/\s{2,}/g, " ")       // espacios dobles
-//       .trim()} }}`;
-//   }
-// );
+ resultado = resultado.replace(
+  /style=\{\{([\s\S]*?)\}\}/g,
+  (match, contenido) => {
+    return `style={{ ${contenido
+      .replace(/\s*\/\/.*$/gm, "")   // elimina comentarios //
+      .replace(/\s*\n\s*/g, " ")     // quita saltos de línea
+      .replace(/\s{2,}/g, " ")       // espacios dobles
+      .trim()} }}`;
+  }
+);
 
-//  resultado = resultado.replace(
-//   /<SPage\b[^>]*>/g,
-//   (match) => {
-//     let limpio = match;
+ resultado = resultado.replace(
+  /<SPage\b[^>]*>/g,
+  (match) => {
+    let limpio = match;
 
-//     // no tocar si hay funciones dentro
-//     if (match.includes("=>") || match.includes("function")) {
-//       return match;
-//     }
+    // no tocar si hay funciones dentro
+    if (match.includes("=>") || match.includes("function")) {
+      return match;
+    }
 
-//     limpio = limpio
-//       .replace(/\s*\/\/.*?(?=\s|>)/g, "")
-//       .replace(/\s*\n\s*/g, " ")
-//       .replace(/\s{2,}/g, " ")
-//       .trim();
+    limpio = limpio
+      .replace(/\s*\/\/.*?(?=\s|>)/g, "")
+      .replace(/\s*\n\s*/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
 
-//     return limpio;
-//   }
-// );
+    return limpio;
+  }
+);
 
  resultado = resultado.replace(
   /(\w+\s*=\s*(await\s+)?[a-zA-Z0-9_.]+\(([\s\S]*?)\))/g,
