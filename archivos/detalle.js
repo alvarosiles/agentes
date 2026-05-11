@@ -15,44 +15,47 @@ import BtnSend from "./Components/BtnSend";
 // const params = SNavigation.getAllParams();
 
 export default class detalle extends React.Component {
-  static FOOTER = <BottomNavigator url={"/servicio"} />
+    static FOOTER = <BottomNavigator url={"/servicio"} />
 
-  // state = {
-  //   sucursales: [],
-  //   loading: false,
-  // };
-  constructor(props) {
-    super(props);
-    this.state = {
-      envio: 0,
-      loading: false,
-      paquete_detalle:[]
-    };
-    this.params = SNavigation.getAllParams();
-    this.key = SNavigation.getParam("key_servicio");
+    // state = {
+    //   sucursales: [],
+    //   loading: false,
+    // };
+    constructor(props) {
+        super(props);
+        this.state = {
+            envio: 0,
+            loading: false,
+            paquete_detalle: []
+        };
+        this.params = SNavigation.getAllParams();
+        this.key = SNavigation.getParam("key_servicio");
 
-  }
+    }
 
     btn = ({ title, onPress, active }) => {
+
+        console.clear();
+        console.log("%c" + JSON.stringify(title, null, 2), "color: #2ECC40; font-weight: bold;");
         return <SView col={"xs-5.5"} height={44} center border={STheme.color.secondary} backgroundColor={active ? STheme.color.secondary : STheme.color.white} style={{ borderRadius: 8 }} onPress={onPress}  >
             <SText fontSize={14} color={active ? STheme.color.white : STheme.color.secondary} bold>{title}</SText>
         </SView>
     }
 
-  componentDidMount() {
-    this.loadData();
-  }
+    componentDidMount() {
+        this.loadData();
+    }
 
-  async loadData() {
-    const paquete_detalle= await MDL.paquete.getByKey(
-        this.params.pk,
-    );
-    this.state.paquete_detalle = paquete_detalle.data[this.params.pk];
-    this.forceUpdate();
-  }
+    async loadData() {
+        const paquete_detalle = await MDL.paquete.getByKey(
+            this.params.pk,
+        );
+        this.state.paquete_detalle = paquete_detalle.data[this.params.pk];
+        this.forceUpdate();
+    }
 
-      render_with_data() {
-    
+    render_with_data() {
+
         var paquete = this.state.paquete_detalle;
         if (!paquete) return <SLoad />
         var { key, descripcion, observacion, dias, precio, participantes } = paquete;
@@ -162,14 +165,14 @@ export default class detalle extends React.Component {
 
     }
 
-  render() {
-    return <SPage  title={"Detalle Membresía"}>
-      <Container flex>
-        {this.render_with_data()}
-      </Container>
-      <SHr height={30} />
-    </SPage>
-  }
+    render() {
+        return <SPage title={"Detalle Membresía"}>
+            <Container flex>
+                {this.render_with_data()}
+            </Container>
+            <SHr height={30} />
+        </SPage>
+    }
 }
 
 
