@@ -21,6 +21,7 @@ function limpiarTexto(texto) {
 	resultado = resultado.replace(/\s+>/g, ">");
 	// 🧯🧯🧯 eso de tabulacion
 	// resultado = resultado.replace(/^[\t ]+/gm, "");
+ 
 	return resultado;
 }
 
