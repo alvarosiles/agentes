@@ -4,25 +4,21 @@ const path = require("path");
 function limpiarTexto(texto) {
 	let resultado = texto;
 
-	// Elimina líneas vacías
-	// resultado = resultado.replace(/^[\t ]+/gm, ""); no es esto luego verlo
-	// resultado = resultado.replace(/^\s*$/gm, "");
-	// resultado = resultado.replace(/^\s*[\r\n]/g, "");
+ 
 	// 🧹 Elimina todas las líneas vacías ❤❤
-	// resultado = resultado.replace(/^\s*$/gm, "");
+	resultado = resultado.replace(/^\s*$/gm, "");
 	// Borrar 🧹 Elimina comentarios //
-	// resultado = resultado.replace(/\/\/.*$/gm, "");
+	resultado = resultado.replace(/\/\/.*$/gm, "");
 	// Borrar 🧹🧹 Borra comentarios /* ... */
-	// resultado = resultado.replace(/\s*\/\*[\s\S]*?\*\/\s*/g, "");
+	resultado = resultado.replace(/\s*\/\*[\s\S]*?\*\/\s*/g, "");
 	// 📏 Elimina múltiples saltos de línea seguidos
-	// resultado = resultado.replace(/(\r?\n){2,}/g, "\n");
+	resultado = resultado.replace(/(\r?\n){2,}/g, "\n");
 	// 🧯 Elimina console.log("%c...")
-	// resultado = resultado.replace(/^\s*console\.log\("%c".*\)\s*;?\s*$/gm, "");
+	resultado = resultado.replace(/^\s*console\.log\("%c".*\)\s*;?\s*$/gm, "");
 	// 🧯 Elimina console.clear("%c...")
-	// resultado = resultado.replace(/^\s*console\.clear\(\);\s*$/gm, "");
+	resultado = resultado.replace(/^\s*console\.clear\(\);\s*$/gm, "");
 	// Busca: ✂️ Elimina espacios antes de ">" 
-	// resultado = resultado.replace(/\s+>/g, ">");
-	// resultado = resultado.replace(/^\s*\n/g, ">");
+	resultado = resultado.replace(/\s+>/g, ">");
 	// 🧯🧯🧯 eso de tabulacion
 	// resultado = resultado.replace(/^[\t ]+/gm, "");
 	return resultado;
