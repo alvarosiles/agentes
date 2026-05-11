@@ -4,47 +4,29 @@ const path = require("path");
 function limpiarTexto(texto) {
 	let resultado = texto;
 
-	// Elimina líneas vacías o con solo espacios
+	// Elimina líneas vacías
+	// resultado = resultado.replace(/^\s*\n/gm, "");
+
+	// Elimina console.log("%c...")
+	// resultado = resultado.replace(/^\s*console\.log\("%c".*\n?/gm, "");
+
+	// Elimina console.clear();
+	// resultado = resultado.replace(/^\s*console\.clear\(\);.*\n?/gm, "");
+
+	// Elimina comentarios //
+	// resultado = resultado.replace(/^\s*\/\/.*\n?/gm, "");
+
+	// Elimina múltiples saltos de línea seguidos
+	resultado = resultado.replace(/(\r?\n){2,}/g, "\n");
+
+	// Busca:
+	//    espacios antes de >
 	// Ejemplo:
+	//    <View    >
 	//
-	// "     \n"
-	//
-	// Explicación:
-	// ^      = inicio de línea
-	// \s*    = espacios/tabs opcionales
-	// \n     = salto de línea
-	// gm     = global + multiline
-	resultado = resultado.replace(/^\s*\n/gm, "");
-
-	// Elimina líneas con:
-	// console.log("%c ...");
-	//
-	// Ejemplo:
-	// console.log("%cHola", "color:red");
-	//
-	// Explicación:
-	// ^\s*                 = espacios al inicio
-	// console\.log         = texto literal
-	// \("%c"               = busca ("%c"
-	// .*                   = cualquier cosa después
-	// \n?                  = salto opcional
-	resultado = resultado.replace(/^\s*console\.log\("%c".*\n?/gm, "");
-
-	// Elimina líneas con:
-	// console.clear();
-	//
-	// Explicación:
-	// console\.clear\(\); = detecta exactamente console.clear();
-	resultado = resultado.replace(/^\s*console\.clear\(\);.*\n?/gm, "");
-
-	// Elimina comentarios de una línea:
-	// // comentario
-	//
-	// Explicación:
-	// ^\s* = espacios al inicio
-	// //   = comentario
-	// .*   = cualquier texto
-	resultado = resultado.replace(/^\s*\/\/.*\n?/gm, "");
+	// Reemplaza por:
+	//    <View>
+	// resultado = resultado.replace(/\s+>/g, ">");
 
 	return resultado;
 }
@@ -53,16 +35,15 @@ function recorrerArchivos(dir) {
 	const entradas = fs.readdirSync(dir, { withFileTypes: true });
 
 	for (const entrada of entradas) {
-		const rutaCompleta = path.join(dir, "archivos");
-		// const rutaCompleta = path.join(dir, entrada.name);
+		const rutaCompleta = path.join(dir, entrada.name);
 
-		// Si es carpeta, entra recursivamente
+		// Entrar en subcarpetas
 		if (entrada.isDirectory()) {
 			recorrerArchivos(rutaCompleta);
 			continue;
 		}
 
-		// Solo procesa archivos .js
+		// Solo archivos .js
 		if (!entrada.name.endsWith(".js")) {
 			continue;
 		}
@@ -72,20 +53,33 @@ function recorrerArchivos(dir) {
 			continue;
 		}
 
-		const textoOriginal = fs.readFileSync(rutaCompleta, "utf8");
+		try {
+			const textoOriginal = fs.readFileSync(rutaCompleta, "utf8");
 
-		// Limpia el contenido
-		const textoLimpio = limpiarTexto(textoOriginal);
+			// Limpia contenido
+			const textoLimpio = limpiarTexto(textoOriginal);
 
-		// Guarda solo si hubo cambios
-		if (textoLimpio !== textoOriginal) {
-			fs.writeFileSync(rutaCompleta, textoLimpio, "utf8");
-			console.log(`Limpiado: ${rutaCompleta}`);
+			// Guarda solo si hubo cambios
+			if (textoLimpio !== textoOriginal) {
+				fs.writeFileSync(rutaCompleta, textoLimpio, "utf8");
+				console.log(`Limpiado: ${rutaCompleta}`);
+			}
+		} catch (error) {
+			console.log(`Error en ${rutaCompleta}:`, error.message);
 		}
 	}
 }
 
-// Empieza desde la carpeta actual
-recorrerArchivos(__dirname);
+// Carpeta objetivo
+const carpetaObjetivo = path.join(__dirname, "archivos");
+
+// Verifica existencia
+if (!fs.existsSync(carpetaObjetivo)) {
+	console.log('La carpeta "archivos" no existe');
+	process.exit(1);
+}
+
+// Ejecuta limpieza
+recorrerArchivos(carpetaObjetivo);
 
 console.log("Proceso de limpieza completado");
