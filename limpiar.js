@@ -5,28 +5,21 @@ function limpiarTexto(texto) {
 	let resultado = texto;
 
 	// Elimina líneas vacías
-	// resultado = resultado.replace(/^\s*\n/gm, "");
-
-	// Elimina console.log("%c...")
-	// resultado = resultado.replace(/^\s*console\.log\("%c".*\n?/gm, "");
-
-	// Elimina console.clear();
-	// resultado = resultado.replace(/^\s*console\.clear\(\);.*\n?/gm, "");
+ 	resultado = resultado.replace(/^\s*\/\/.*$/gm, "")
 
 	// Elimina comentarios //
-	// resultado = resultado.replace(/^\s*\/\/.*\n?/gm, "");
+	resultado = resultado.replace(/^\s*\/\/.*\n?/g, "");
 
 	// Elimina múltiples saltos de línea seguidos
 	resultado = resultado.replace(/(\r?\n){2,}/g, "\n");
 
-	// Busca:
-	//    espacios antes de >
-	// Ejemplo:
-	//    <View    >
-	//
-	// Reemplaza por:
-	//    <View>
-	// resultado = resultado.replace(/\s+>/g, ">");
+
+	// Elimina console.log("%c...") ❤
+	resultado = resultado.replace(/^\s*console\.log\("%c".*\)\s*;?\s*$/gm, "");
+	// Elimina console.clear();❤
+	resultado = resultado.replace(/^\s*console\.clear\(\);\s*$/gm, "");
+	// Busca: espacios antes de > ❤❤
+	resultado = resultado.replace(/\s+>/g, ">");
 
 	return resultado;
 }
