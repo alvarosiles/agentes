@@ -524,4 +524,4 @@ Explica cada archivo antes de mostrar el código.
 
 No resumas.
 
-Espera mi confirmación antes de continuar con el siguiente archivo.
+y borrra todos los archivos que no se usan

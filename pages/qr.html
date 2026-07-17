@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Códigos QR</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">📱 Códigos QR <span class="subtitle">Genera y descarga QR</span></h1>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- Generador rápido -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <span class="card-title">⚡ Generador Rápido de QR</span>
+      </div>
+      <div class="card-body">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">Tipo de QR</label>
+            <select id="qr-tipo" class="form-control" onchange="updateQRPlaceholder()">
+              <option value="text">Texto libre</option>
+              <option value="url">URL / Enlace</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">Correo Electrónico</option>
+              <option value="phone">Teléfono</option>
+              <option value="wifi">Wi-Fi</option>
+              <option value="vcard">Contacto (vCard)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tamaño</label>
+            <select id="qr-size" class="form-control">
+              <option value="200">200 × 200 px</option>
+              <option value="300" selected>300 × 300 px</option>
+              <option value="400">400 × 400 px</option>
+              <option value="500">500 × 500 px</option>
+            </select>
+          </div>
+          <div class="form-group full" id="qr-input-group">
+            <label class="form-label" id="qr-input-label">Contenido del QR</label>
+            <input type="text" id="qr-content" class="form-control" placeholder="Escribe el texto o URL..." oninput="previewQR()">
+          </div>
+          <!-- WiFi fields (hidden by default) -->
+          <div class="form-group hidden" id="wifi-ssid">
+            <label class="form-label">SSID (nombre de red)</label>
+            <input type="text" id="f-ssid" class="form-control" placeholder="MiRedWiFi" oninput="previewQR()">
+          </div>
+          <div class="form-group hidden" id="wifi-pass">
+            <label class="form-label">Contraseña</label>
+            <input type="text" id="f-wpass" class="form-control" placeholder="contraseña123" oninput="previewQR()">
+          </div>
+          <!-- vCard fields (hidden by default) -->
+          <div class="form-group hidden" id="vc-nombre">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" id="f-vc-nombre" class="form-control" oninput="previewQR()">
+          </div>
+          <div class="form-group hidden" id="vc-tel">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="f-vc-tel" class="form-control" oninput="previewQR()">
+          </div>
+          <div class="form-group hidden" id="vc-email">
+            <label class="form-label">Email</label>
+            <input type="text" id="f-vc-email" class="form-control" oninput="previewQR()">
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+          <div id="qr-preview-box" class="qr-box" style="min-width:200px;min-height:200px;display:flex;align-items:center;justify-content:center;">
+            <span class="text-muted" style="font-size:13px;">Vista previa del QR</span>
+          </div>
+          <div style="flex:1;">
+            <p class="text-muted fs-sm" style="margin-bottom:12px;">El QR se genera automáticamente mientras escribes.</p>
+            <button class="btn btn-primary" onclick="downloadCurrentQR()">⬇️ Descargar QR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR de agentes y proveedores -->
+    <div class="section-header">
+      <span class="section-title">QR de Agentes y Proveedores</span>
+      <div style="display:flex;gap:8px;">
+        <button id="tab-agentes" class="btn btn-primary btn-sm" onclick="showTab('agentes')">👥 Agentes</button>
+        <button id="tab-proveedores" class="btn btn-ghost btn-sm" onclick="showTab('proveedores')">🏢 Proveedores</button>
+      </div>
+    </div>
+
+    <div id="qr-grid-container" class="qr-grid"></div>
+
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initSidebar('qr');
+    showTab('agentes');
+  });
+
+  let currentTab = 'agentes';
+
+  function showTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-agentes').className    = `btn btn-sm ${tab === 'agentes'    ? 'btn-primary' : 'btn-ghost'}`;
+    document.getElementById('tab-proveedores').className = `btn btn-sm ${tab === 'proveedores' ? 'btn-primary' : 'btn-ghost'}`;
+    renderQRGrid(tab);
+  }
+
+  function renderQRGrid(tab) {
+    const grid = document.getElementById('qr-grid-container');
+    const lista = tab === 'agentes' ? DataManager.getAgentes() : DataManager.getProveedores();
+
+    if (!lista.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📱</div><div class="empty-title">Sin registros</div></div>`;
+      return;
+    }
+
+    grid.innerHTML = lista.map(item => {
+      const nombre = tab === 'agentes' ? item.nombre : item.empresa;
+      const sub    = tab === 'agentes' ? (item.cargo || item.empresa || '') : (item.contacto || item.categoria || '');
+      const qrText = getItemQRText(item, tab);
+      const size   = 120;
+      const qrURL  = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrText)}`;
+
+      return `
+        <div class="qr-item-card">
+          <div class="qr-item-img">
+            <img src="${qrURL}" width="${size}" height="${size}" alt="QR ${escHtml(nombre)}" loading="lazy">
+          </div>
+          <div class="fw-bold" style="font-size:13px;margin-bottom:3px;">${escHtml(nombre)}</div>
+          <div class="text-muted fs-sm" style="margin-bottom:10px;">${escHtml(sub)}</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+            <a href="perfil.html?tipo=${tab === 'agentes' ? 'agente' : 'proveedor'}&id=${item.id}" class="btn btn-ghost btn-xs">👁 Ver</a>
+            <button class="btn btn-primary btn-xs" onclick="downloadItemQR('${escHtml(nombre)}','${encodeURIComponent(qrText)}',${size*2})">⬇️</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function getItemQRText(item, tab) {
+    if (tab === 'agentes') {
+      return ['BEGIN:VCARD','VERSION:3.0',`FN:${item.nombre||''}`,`ORG:${item.empresa||''}`,
+        `TITLE:${item.cargo||''}`,`TEL;TYPE=CELL:${item.telefono||''}`,`EMAIL:${item.correo||''}`,
+        'END:VCARD'].join('\n');
+    } else {
+      return ['BEGIN:VCARD','VERSION:3.0',`FN:${item.empresa||''}`,`ORG:${item.empresa||''}`,
+        `TEL;TYPE=WORK:${item.telefono||''}`,`EMAIL:${item.correo||''}`,`URL:${item.web||''}`,
+        'END:VCARD'].join('\n');
+    }
+  }
+
+  function downloadItemQR(nombre, encodedText, size) {
+    const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}`;
+    fetch(url).then(r => r.blob()).then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `qr-${nombre.replace(/\s+/g,'-').toLowerCase()}.png`;
+      a.click(); URL.revokeObjectURL(a.href);
+    }).catch(() => showToast('Error al descargar', 'error'));
+  }
+
+  // ============ Generador rápido ============
+
+  let previewTimeout = null;
+
+  function updateQRPlaceholder() {
+    const tipo = document.getElementById('qr-tipo').value;
+    const label = document.getElementById('qr-input-label');
+    const input = document.getElementById('qr-content');
+    const group = document.getElementById('qr-input-group');
+    const wifiFields  = ['wifi-ssid','wifi-pass'];
+    const vcardFields = ['vc-nombre','vc-tel','vc-email'];
+
+    [...wifiFields, ...vcardFields].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+    group.classList.remove('hidden');
+
+    const placeholders = {
+      text: 'Escribe cualquier texto...',
+      url:  'https://ejemplo.com',
+      whatsapp: '+591 70000000',
+      email: 'correo@ejemplo.com',
+      phone: '+591 70000000',
+      wifi: '',
+      vcard: '',
+    };
+    const labels = {
+      text: 'Texto libre', url: 'URL completa', whatsapp: 'Número de WhatsApp',
+      email: 'Dirección de correo', phone: 'Número de teléfono', wifi: 'Red Wi-Fi', vcard: 'Contacto',
+    };
+
+    label.textContent = labels[tipo] || 'Contenido';
+    input.placeholder = placeholders[tipo] || '';
+
+    if (tipo === 'wifi')  { wifiFields.forEach(id => document.getElementById(id)?.classList.remove('hidden')); group.classList.add('hidden'); }
+    if (tipo === 'vcard') { vcardFields.forEach(id => document.getElementById(id)?.classList.remove('hidden')); group.classList.add('hidden'); }
+
+    previewQR();
+  }
+
+  function buildQRContent() {
+    const tipo = document.getElementById('qr-tipo').value;
+    const val  = (document.getElementById('qr-content')?.value || '').trim();
+
+    if (tipo === 'text')     return val;
+    if (tipo === 'url')      return val;
+    if (tipo === 'whatsapp') return `https://wa.me/${val.replace(/\D/g,'')}`;
+    if (tipo === 'email')    return `mailto:${val}`;
+    if (tipo === 'phone')    return `tel:${val}`;
+    if (tipo === 'wifi') {
+      const ssid = document.getElementById('f-ssid')?.value || '';
+      const pass = document.getElementById('f-wpass')?.value || '';
+      return `WIFI:T:WPA;S:${ssid};P:${pass};;`;
+    }
+    if (tipo === 'vcard') {
+      const n = document.getElementById('f-vc-nombre')?.value || '';
+      const t = document.getElementById('f-vc-tel')?.value || '';
+      const e = document.getElementById('f-vc-email')?.value || '';
+      return `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${t}\nEMAIL:${e}\nEND:VCARD`;
+    }
+    return val;
+  }
+
+  function previewQR() {
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(() => {
+      const content = buildQRContent();
+      const box = document.getElementById('qr-preview-box');
+      if (!content.trim()) {
+        box.innerHTML = '<span class="text-muted" style="font-size:13px;">Vista previa del QR</span>';
+        return;
+      }
+      const size = parseInt(document.getElementById('qr-size')?.value || '300');
+      const url  = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(content)}`;
+      box.innerHTML = `<img src="${url}" width="200" height="200" alt="QR preview">`;
+    }, 600);
+  }
+
+  function downloadCurrentQR() {
+    const content = buildQRContent();
+    if (!content.trim()) { showToast('Escribe el contenido del QR primero', 'warning'); return; }
+    const size = parseInt(document.getElementById('qr-size')?.value || '300');
+    const url  = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(content)}`;
+    fetch(url).then(r => r.blob()).then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `qr-generado.png`;
+      a.click(); URL.revokeObjectURL(a.href);
+    }).catch(() => showToast('Error al descargar', 'error'));
+  }
+</script>
+</body>
+</html>

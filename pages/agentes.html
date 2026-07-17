@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Gestión</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">👥 Agentes <span class="subtitle">Gestión de agentes</span></h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="openModalNuevo()">➕ Nuevo Agente</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- Búsqueda y filtros -->
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar por nombre, empresa, teléfono..." oninput="filterAgentes()">
+      </div>
+      <select id="filter-estado" class="filter-select" onchange="filterAgentes()">
+        <option value="">Todos los estados</option>
+        <option value="Activo">🟢 Activo</option>
+        <option value="Inactivo">🔴 Inactivo</option>
+      </select>
+      <select id="filter-categoria" class="filter-select" onchange="filterAgentes()">
+        <option value="">Todas las categorías</option>
+      </select>
+      <select id="filter-orden" class="filter-select" onchange="filterAgentes()">
+        <option value="nombre">Ordenar: Nombre</option>
+        <option value="empresa">Ordenar: Empresa</option>
+        <option value="fecha">Ordenar: Fecha</option>
+        <option value="ciudad">Ordenar: Ciudad</option>
+      </select>
+    </div>
+
+    <div id="results-count" class="results-count"></div>
+
+    <!-- Grid de tarjetas -->
+    <div id="agents-grid" class="agents-grid"></div>
+
+  </div>
+</div>
+
+<!-- Modal Nuevo/Editar Agente -->
+<div id="modal-agente" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">➕ Nuevo Agente</span>
+      <button class="modal-close" onclick="closeModal('modal-agente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-agente" onsubmit="submitAgente(event)">
+        <input type="hidden" id="f-id">
+        <div class="form-grid">
+
+          <!-- Foto -->
+          <div class="form-group full">
+            <label class="form-label">Foto del agente</label>
+            <div class="avatar-preview-wrap">
+              <div class="avatar-preview" id="foto-preview">👤</div>
+              <div style="flex:1;">
+                <input type="file" id="f-foto-file" accept="image/*" class="form-control" style="padding:6px;" onchange="previewFoto(this)">
+                <p class="text-muted mt-1" style="font-size:11px;">JPG, PNG, GIF — máx. 2MB</p>
+              </div>
+            </div>
+            <input type="hidden" id="f-foto">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label class="form-label">Nombre completo *</label>
+            <input type="text" id="f-nombre" class="form-control" placeholder="Juan Pérez" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Empresa</label>
+            <input type="text" id="f-empresa" class="form-control" placeholder="Empresa S.A.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cargo</label>
+            <input type="text" id="f-cargo" class="form-control" placeholder="Agente Comercial">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <select id="f-categoria" class="form-control"></select>
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" id="f-telefono" class="form-control" placeholder="+591 70000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp</label>
+            <input type="tel" id="f-whatsapp" class="form-control" placeholder="+591 70000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" id="f-correo" class="form-control" placeholder="juan@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha de registro</label>
+            <input type="date" id="f-fecha" class="form-control">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group full">
+            <label class="form-label">Dirección</label>
+            <input type="text" id="f-direccion" class="form-control" placeholder="Av. Principal 123">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ciudad</label>
+            <input type="text" id="f-ciudad" class="form-control" placeholder="La Paz">
+          </div>
+          <div class="form-group">
+            <label class="form-label">País</label>
+            <input type="text" id="f-pais" class="form-control" placeholder="Bolivia">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select id="f-estado" class="form-control">
+              <option value="Activo">🟢 Activo</option>
+              <option value="Inactivo">🔴 Inactivo</option>
+            </select>
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group full">
+            <label class="form-label">Notas</label>
+            <textarea id="f-notas" class="form-control" placeholder="Información adicional..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-agente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="document.getElementById('form-agente').requestSubmit()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal QR del agente -->
+<div id="modal-qr" class="modal-overlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title" id="qr-modal-title">📱 Código QR</span>
+      <button class="modal-close" onclick="closeModal('modal-qr')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div id="qr-display" style="margin:16px auto;"></div>
+      <p id="qr-name" class="fw-bold" style="font-size:15px;margin-bottom:6px;"></p>
+      <p id="qr-info" class="text-muted fs-sm" style="margin-bottom:18px;"></p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="downloadQR()">⬇️ Descargar QR</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyContactInfo()">📋 Copiar Info</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/agentes.js"></script>
+</body>
+</html>

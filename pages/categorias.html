@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Categorías</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">📁 Categorías <span class="subtitle">Gestión de categorías</span></h1>
+    </div>
+  </header>
+
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" id="cat-layout">
+
+      <!-- Agregar categoría -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">➕ Nueva Categoría</span></div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Nombre de la categoría</label>
+            <input type="text" id="nueva-cat" class="form-control" placeholder="Ej: Logística, Exportación..." maxlength="50"
+              onkeydown="if(event.key==='Enter')agregarCategoria()">
+          </div>
+          <button class="btn btn-primary" onclick="agregarCategoria()">➕ Agregar</button>
+        </div>
+      </div>
+
+      <!-- Lista de categorías -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 Categorías Actuales</span>
+          <span id="cat-count" class="badge badge-primary">0</span>
+        </div>
+        <div id="cat-list" style="padding:16px;max-height:400px;overflow-y:auto;"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initSidebar('categorias');
+    renderCategorias();
+    fixLayout();
+    window.addEventListener('resize', fixLayout);
+  });
+
+  function fixLayout() {
+    const el = document.getElementById('cat-layout');
+    if (el) el.style.gridTemplateColumns = window.innerWidth < 768 ? '1fr' : '1fr 1fr';
+  }
+
+  function renderCategorias() {
+    const cats = DataManager.getCategorias();
+    const list = document.getElementById('cat-list');
+    const count = document.getElementById('cat-count');
+    if (count) count.textContent = cats.length;
+
+    if (!cats.length) {
+      list.innerHTML = `<p class="text-muted text-center" style="padding:20px;">Sin categorías registradas</p>`;
+      return;
+    }
+
+    list.innerHTML = cats.map((cat, i) => {
+      const agentes   = DataManager.getAgentes().filter(a => a.categoria === cat).length;
+      const provs     = DataManager.getProveedores().filter(p => p.categoria === cat).length;
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+          background:rgba(0,0,0,0.1);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);">
+          <div>
+            <span style="font-weight:600;">${escHtml(cat)}</span>
+            <span class="text-muted fs-sm" style="margin-left:8px;">${agentes} agente${agentes!==1?'s':''} · ${provs} proveedor${provs!==1?'es':''}</span>
+          </div>
+          <button class="btn btn-danger btn-xs" onclick="eliminarCategoria('${escHtml(cat)}')" title="Eliminar">🗑</button>
+        </div>`;
+    }).join('');
+  }
+
+  function agregarCategoria() {
+    const input = document.getElementById('nueva-cat');
+    const nombre = input.value.trim();
+    if (!nombre) { showToast('Escribe el nombre de la categoría', 'warning'); return; }
+    DataManager.addCategoria(nombre);
+    input.value = '';
+    renderCategorias();
+    showToast(`Categoría "${nombre}" agregada`, 'success');
+  }
+
+  async function eliminarCategoria(nombre) {
+    const agentes = DataManager.getAgentes().filter(a => a.categoria === nombre).length;
+    const provs   = DataManager.getProveedores().filter(p => p.categoria === nombre).length;
+    const en_uso  = agentes + provs;
+
+    const msg = en_uso > 0
+      ? `La categoría "<strong>${escHtml(nombre)}</strong>" está en uso por ${en_uso} registro(s). ¿Eliminarla de todas formas?`
+      : `¿Eliminar la categoría "<strong>${escHtml(nombre)}</strong>"?`;
+
+    const ok = await confirmDialog(msg);
+    if (!ok) return;
+    DataManager.deleteCategoria(nombre);
+    renderCategorias();
+    showToast(`Categoría "${nombre}" eliminada`, 'error');
+  }
+</script>
+</body>
+</html>

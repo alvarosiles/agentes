@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Configuración</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">⚙️ Configuración <span class="subtitle">Sistema y datos</span></h1>
+    </div>
+  </header>
+
+  <div class="content">
+    <div style="max-width:720px;">
+
+      <!-- Información del sistema -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">ℹ️ Información del Sistema</span></div>
+        <div class="card-body" id="sys-info"></div>
+      </div>
+
+      <!-- Importar / Exportar -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">💾 Importar / Exportar Datos</span></div>
+        <div class="card-body">
+          <p class="text-muted fs-sm" style="margin-bottom:16px;">Exporta todos tus datos como JSON para respaldarlos o importarlos en otro dispositivo.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+            <button class="btn btn-primary" onclick="exportarDatos()">📤 Exportar JSON</button>
+            <label class="btn btn-ghost" style="cursor:pointer;">
+              📥 Importar JSON
+              <input type="file" accept=".json" style="display:none;" onchange="importarDatos(this)">
+            </label>
+          </div>
+          <hr style="border-color:var(--border);margin-bottom:16px;">
+          <p class="text-muted fs-sm" style="margin-bottom:10px;"><strong style="color:var(--warning);">⚠️ Zona de peligro:</strong> Las siguientes acciones son irreversibles.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-warning btn-sm" onclick="resetearDemo()">🔄 Restaurar datos demo</button>
+            <button class="btn btn-danger btn-sm" onclick="borrarTodo()">🗑️ Borrar todos los datos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferencias -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><span class="card-title">🎛️ Preferencias</span></div>
+        <div class="card-body">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Orden por defecto de agentes</label>
+            <select id="pref-orden" class="form-control" onchange="guardarPref()">
+              <option value="nombre">Nombre</option>
+              <option value="empresa">Empresa</option>
+              <option value="fecha">Fecha de registro</option>
+              <option value="ciudad">Ciudad</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">País por defecto</label>
+            <input type="text" id="pref-pais" class="form-control" placeholder="Bolivia" oninput="guardarPref()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Acerca de -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">👋 Acerca de</span></div>
+        <div class="card-body">
+          <p style="font-size:14px;line-height:1.7;color:var(--text-muted);">
+            <strong style="color:var(--text);">Agentes</strong> — Sistema de Gestión Personal<br>
+            Versión 1.0.0<br>
+            Desarrollado con HTML5, CSS3 y JavaScript puro.<br>
+            Todos los datos se almacenan localmente en tu navegador.<br>
+            Sin servidores. Sin envío de información.<br><br>
+            <a href="https://agentes.alvarosiles.cloud" target="_blank" style="color:var(--primary);">agentes.alvarosiles.cloud</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initSidebar('configuracion');
+    renderSysInfo();
+    loadPrefs();
+  });
+
+  function renderSysInfo() {
+    const ag   = DataManager.getAgentes().length;
+    const pv   = DataManager.getProveedores().length;
+    const cats = DataManager.getCategorias().length;
+    const favs = DataManager.getFavoritos().length;
+
+    // Estimar tamaño en localStorage
+    let bytes = 0;
+    for (let k in localStorage) {
+      if (k.startsWith('ag_')) bytes += (localStorage[k]?.length || 0) * 2;
+    }
+    const kb = (bytes / 1024).toFixed(1);
+
+    document.getElementById('sys-info').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;">
+        ${[
+          ['👥','Agentes',ag],
+          ['🏢','Proveedores',pv],
+          ['📁','Categorías',cats],
+          ['⭐','Favoritos',favs],
+          ['💾','Almacenamiento',`${kb} KB`],
+        ].map(([icon,label,val])=>`
+          <div style="background:rgba(0,0,0,0.1);border-radius:8px;padding:14px;border:1px solid var(--border);text-align:center;">
+            <div style="font-size:22px;margin-bottom:6px;">${icon}</div>
+            <div style="font-size:20px;font-weight:800;">${val}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${label}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  function loadPrefs() {
+    const cfg = DataManager.getConfig();
+    const orden = document.getElementById('pref-orden');
+    const pais  = document.getElementById('pref-pais');
+    if (orden) orden.value = cfg.orden || 'nombre';
+    if (pais)  pais.value  = cfg.pais  || '';
+  }
+
+  function guardarPref() {
+    const cfg = DataManager.getConfig();
+    cfg.orden = document.getElementById('pref-orden')?.value || 'nombre';
+    cfg.pais  = document.getElementById('pref-pais')?.value  || '';
+    DataManager.saveConfig(cfg);
+    showToast('Preferencias guardadas', 'success', 1500);
+  }
+
+  function exportarDatos() {
+    const datos = {
+      exportado: new Date().toISOString(),
+      version: '1.0.0',
+      agentes:    DataManager.getAgentes(),
+      proveedores: DataManager.getProveedores(),
+      categorias:  DataManager.getCategorias(),
+      config:      DataManager.getConfig(),
+    };
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `agentes-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Datos exportados', 'success');
+  }
+
+  async function importarDatos(input) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const datos = JSON.parse(text);
+      const ok = await confirmDialog('¿Importar datos del archivo? Se <strong>sobreescribirán</strong> los datos actuales.');
+      if (!ok) { input.value=''; return; }
+
+      if (datos.agentes)    DataManager.saveAgentes(datos.agentes);
+      if (datos.proveedores) DataManager.saveProveedores(datos.proveedores);
+      if (datos.categorias)  DataManager.saveCategorias(datos.categorias);
+      if (datos.config)      DataManager.saveConfig(datos.config);
+
+      showToast('Datos importados correctamente', 'success');
+      renderSysInfo();
+    } catch (e) {
+      showToast('Archivo JSON inválido', 'error');
+    }
+    input.value = '';
+  }
+
+  async function resetearDemo() {
+    const ok = await confirmDialog('¿Restaurar los datos de demostración? Se perderán los datos actuales.');
+    if (!ok) return;
+    Storage.remove('ag_agentes');
+    Storage.remove('ag_proveedores');
+    Storage.remove('ag_categorias');
+    Storage.remove('ag_favoritos');
+    showToast('Datos demo restaurados', 'success');
+    renderSysInfo();
+  }
+
+  async function borrarTodo() {
+    const ok = await confirmDialog('⚠️ ¿Borrar <strong>todos los datos</strong>? Esta acción es irreversible y eliminará agentes, proveedores, categorías y favoritos.');
+    if (!ok) return;
+    ['ag_agentes','ag_proveedores','ag_categorias','ag_favoritos','ag_config'].forEach(k => Storage.remove(k));
+    showToast('Todos los datos eliminados', 'error');
+    renderSysInfo();
+  }
+</script>
+</body>
+</html>

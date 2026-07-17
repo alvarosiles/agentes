@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Perfil</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title" id="page-title">Perfil <span class="subtitle">Información completa</span></h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="history.back()">← Volver</button>
+    </div>
+  </header>
+
+  <div class="content" id="perfil-content">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Cargando perfil...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal QR grande -->
+<div id="modal-qr" class="modal-overlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">📱 Código QR</span>
+      <button class="modal-close" onclick="closeModal('modal-qr')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div id="qr-modal-display"></div>
+      <p id="qr-modal-name" class="fw-bold mt-2" style="font-size:16px;"></p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+        <button class="btn btn-primary btn-sm" onclick="downloadQR()">⬇️ Descargar</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyInfo()">📋 Copiar Info</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/perfil.js"></script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes — Proveedores</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<button id="hamburger" class="hamburger" aria-label="Menú">☰</button>
+<aside id="sidebar" class="sidebar"></aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">🏢 Proveedores <span class="subtitle">Gestión de proveedores</span></h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-success btn-sm" onclick="openModalNuevo()">➕ Nuevo Proveedor</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar por empresa, contacto, teléfono..." oninput="filterProveedores()">
+      </div>
+      <select id="filter-estado" class="filter-select" onchange="filterProveedores()">
+        <option value="">Todos los estados</option>
+        <option value="Activo">🟢 Activo</option>
+        <option value="Inactivo">🔴 Inactivo</option>
+      </select>
+      <select id="filter-categoria" class="filter-select" onchange="filterProveedores()">
+        <option value="">Todas las categorías</option>
+      </select>
+      <select id="filter-orden" class="filter-select" onchange="filterProveedores()">
+        <option value="empresa">Ordenar: Empresa</option>
+        <option value="contacto">Ordenar: Contacto</option>
+        <option value="categoria">Ordenar: Categoría</option>
+      </select>
+    </div>
+
+    <div id="results-count" class="results-count"></div>
+    <div id="proveedores-grid" class="agents-grid"></div>
+  </div>
+</div>
+
+<!-- Modal Nuevo/Editar Proveedor -->
+<div id="modal-proveedor" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">➕ Nuevo Proveedor</span>
+      <button class="modal-close" onclick="closeModal('modal-proveedor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-proveedor" onsubmit="submitProveedor(event)">
+        <input type="hidden" id="f-id">
+        <div class="form-grid">
+
+          <div class="form-group full">
+            <label class="form-label">Logo de la empresa</label>
+            <div class="avatar-preview-wrap">
+              <div class="avatar-preview" id="logo-preview">🏢</div>
+              <div style="flex:1;">
+                <input type="file" id="f-logo-file" accept="image/*" class="form-control" style="padding:6px;" onchange="previewLogo(this)">
+                <p class="text-muted mt-1" style="font-size:11px;">JPG, PNG — máx. 2MB</p>
+              </div>
+            </div>
+            <input type="hidden" id="f-logo">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label class="form-label">Nombre de empresa *</label>
+            <input type="text" id="f-empresa" class="form-control" placeholder="Empresa S.A." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Persona de contacto</label>
+            <input type="text" id="f-contacto" class="form-control" placeholder="Carlos López">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <select id="f-categoria" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select id="f-estado" class="form-control">
+              <option value="Activo">🟢 Activo</option>
+              <option value="Inactivo">🔴 Inactivo</option>
+            </select>
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" id="f-telefono" class="form-control" placeholder="+591 70000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp</label>
+            <input type="tel" id="f-whatsapp" class="form-control" placeholder="+591 70000000">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" id="f-correo" class="form-control" placeholder="contacto@empresa.com">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group full">
+            <label class="form-label">Dirección</label>
+            <input type="text" id="f-direccion" class="form-control" placeholder="Av. Comercial 123">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ciudad</label>
+            <input type="text" id="f-ciudad" class="form-control" placeholder="La Paz">
+          </div>
+          <div class="form-group">
+            <label class="form-label">País</label>
+            <input type="text" id="f-pais" class="form-control" placeholder="Bolivia">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Página Web</label>
+            <input type="url" id="f-web" class="form-control" placeholder="https://empresa.com">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group">
+            <label class="form-label">Facebook</label>
+            <input type="text" id="f-facebook" class="form-control" placeholder="facebook.com/empresa">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Instagram</label>
+            <input type="text" id="f-instagram" class="form-control" placeholder="@empresa">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">LinkedIn</label>
+            <input type="text" id="f-linkedin" class="form-control" placeholder="linkedin.com/company/empresa">
+          </div>
+
+          <hr class="form-divider">
+
+          <div class="form-group full">
+            <label class="form-label">Notas</label>
+            <textarea id="f-notas" class="form-control" placeholder="Información adicional..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-proveedor')">Cancelar</button>
+      <button class="btn btn-success" onclick="document.getElementById('form-proveedor').requestSubmit()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal QR -->
+<div id="modal-qr" class="modal-overlay">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title" id="qr-modal-title">📱 Código QR</span>
+      <button class="modal-close" onclick="closeModal('modal-qr')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div id="qr-display" style="margin:16px auto;"></div>
+      <p id="qr-name" class="fw-bold" style="font-size:15px;margin-bottom:6px;"></p>
+      <p id="qr-info" class="text-muted fs-sm" style="margin-bottom:18px;"></p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="downloadQR()">⬇️ Descargar QR</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyContactInfo()">📋 Copiar Info</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/proveedores.js"></script>
+</body>
+</html>
